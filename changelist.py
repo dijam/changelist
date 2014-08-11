@@ -7,14 +7,16 @@ from git import *
 import re
 import json
 import sys
+import formatters
+
 
 __author__ = 'Majid Garmaroudi'
 __version__ = '0.0.1'
 __license__ = 'MIT'
 
 ignoreFiles = [".DS_Store", ".gitignore"]
-
 path = ''
+
 
 def getFilesPath(location, ignore):
     filesArray = []
@@ -27,16 +29,16 @@ def getFilesPath(location, ignore):
 
             filesArray.append(os.path.join(path, name))
 
-
     return filesArray
 
 
 def getDate(path, file):
     repo = Repo(path)
-
-    commit = repo.git.log("-1 --format=%cd", file).split('\n')
-
-    return commit[2][5:].strip()
+    commit = repo.git.log("-1 --format=%cd", file)
+    if len(commit) > 1:
+        return commit.split('\n')[2][5:].strip()
+    else:
+        return None
 
 
 def getGit(path, files):
@@ -47,45 +49,33 @@ def getGit(path, files):
         fileRelPath = re.sub(reg, '', file)
         date = getDate(path, fileRelPath)
 
-        results[fileRelPath] = date
-        # count = count + 1
-        # if count == 2:
-        #     return {}
-
+        if date is not None and date != "":
+            results[fileRelPath] = date
 
     return results
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='List of last modified file(s) date')
+    parser.add_argument('-g', '--git', help='Check git for file versions')
+    parser.add_argument('-f', '--file', help='File(s) to be checked')
+    parser.add_argument('-t', '--type', help='File(s) type')
+    parser.add_argument('--format', help='Output Format - console or json')
+    parser.add_argument('--ignore', help='File(s) type')
 
+    args = vars(parser.parse_args())
 
-parser = argparse.ArgumentParser(description='List of last modified file(s) date')
+    if args['git']:
+        files = {}
+        path = args['git']
 
-parser.add_argument('-g', '--git', help='Check git for file versions')
-parser.add_argument('-f', '--file', help='File(s) to be checked')
-parser.add_argument('-t', '--type', help='File(s) type')
-parser.add_argument('--ignore', help='File(s) type')
-# parser.add_argument('--sum', dest='accumulate', action='store_const',
-#                    const=sum, default=max,
-#                    help='sum the integers (default: find the max)')
+        files = getGit(path, getFilesPath(path, '.git'))
 
+        output_format = 'json'
+        if args['format']:
+            output_format = args['format']
 
-args = vars(parser.parse_args())
+        print formatters.Formatter(output_format).format(files)
+        sys.exit()
 
-if args['git']:
-    files = {}
-    path = args['git']
-
-    files = getGit(path, getFilesPath(path, '.git'))
-
-
-    result = json.dumps(files)
-    f = open('file_date.json', 'w')
-    f.write(result)
-
-    print "Job is Done!"
+    print "Nothing to do here!"
     sys.exit()
-
-print "Nothing to do here!"
-sys.exit()
-
-
-
