@@ -31,7 +31,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Topic :: Text Processing :: Markup :: XML'
     ],
-    install_requires=['voluptuous>=0.8.4'],
+    install_requires=['voluptuous>=0.8.4', 'colorama'],
     py_modules=['changelist'],
     setup_requires=['nose>=1.0']
 )
